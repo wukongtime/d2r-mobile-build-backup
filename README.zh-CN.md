@@ -13,8 +13,8 @@
 
    ```json
    {
-     "url": "https://github.com/jiayx/d2r-mobile-build/releases/download/ios-program-refresh-v2-16fa8e122c7c6b7f2e99f5de07ccc9c998ca93b27dad748daab3f57ab62c516e/D2RMobile-Prepared.zip",
-     "sha256_url": "https://github.com/jiayx/d2r-mobile-build/releases/download/ios-program-refresh-v2-16fa8e122c7c6b7f2e99f5de07ccc9c998ca93b27dad748daab3f57ab62c516e/Prepared-SHA256SUMS.txt"
+     "url": "https://ipfs.filebase.io/ipns/k51qzi5uqu5dkbfnqcjbd6jlgbckojtl4gu7m1kgu8esex1zg4oo485o5cjop2/D2RMobile-Prepared.zip",
+     "sha256_url": "https://ipfs.filebase.io/ipns/k51qzi5uqu5dkbfnqcjbd6jlgbckojtl4gu7m1kgu8esex1zg4oo485o5cjop2/Prepared-SHA256SUMS.txt"
    }
    ```
 
@@ -22,10 +22,12 @@
 
    ```json
    {
-     "url": "https://github.com/jiayx/d2r-mobile-build/releases/download/macos-program-refresh-v2-16fa8e122c7c6b7f2e99f5de07ccc9c998ca93b27dad748daab3f57ab62c516e/D2RMobile-MacPrepared.zip",
-     "sha256_url": "https://github.com/jiayx/d2r-mobile-build/releases/download/macos-program-refresh-v2-16fa8e122c7c6b7f2e99f5de07ccc9c998ca93b27dad748daab3f57ab62c516e/MacPrepared-SHA256SUMS.txt"
+     "url": "https://ipfs.filebase.io/ipns/k51qzi5uqu5dkbfnqcjbd6jlgbckojtl4gu7m1kgu8esex1zg4oo485o5cjop2/D2RMobile-MacPrepared.zip",
+     "sha256_url": "https://ipfs.filebase.io/ipns/k51qzi5uqu5dkbfnqcjbd6jlgbckojtl4gu7m1kgu8esex1zg4oo485o5cjop2/MacPrepared-SHA256SUMS.txt"
    }
    ```
+
+   Filebase IPNS 为固定下载入口；预处理包更新时保持地址不变，并同步更新校验清单。
 
    预处理包大小：iOS 约 **287 MB**，macOS 约 **292 MB**。
 
