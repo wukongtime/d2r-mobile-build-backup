@@ -34,6 +34,19 @@ class ProgramRefreshGuardTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'asset dependency changed'):
             self.check_change('dm/PRODUCT')
 
+    def test_same_game_product_revision_can_be_regenerated(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'dm').mkdir()
+            (root / 'dm/PRODUCT').write_text('3.3.94012-r45\n')
+            with patch.object(refresh.compatibility, 'generation_paths', return_value={'dm/PRODUCT'}), \
+                    patch.object(refresh.compatibility, 'git', side_effect=['dm/PRODUCT\n', '3.3.94012-r44\n']):
+                refresh.verify_reusable(root, 'a' * 40)
+            with patch.object(refresh.compatibility, 'generation_paths', return_value={'dm/PRODUCT'}), \
+                    patch.object(refresh.compatibility, 'git', side_effect=['dm/PRODUCT\n', '3.3.99999-r44\n']):
+                with self.assertRaisesRegex(ValueError, 'asset dependency changed'):
+                    refresh.verify_reusable(root, 'a' * 40)
+
     def test_unknown_change_to_reviewed_generator_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'asset dependency changed'):
             self.check_change('dm/gfx/tools/msl_retarget.sh')

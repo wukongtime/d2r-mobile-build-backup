@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -29,6 +30,14 @@ def verify_reusable(upstream, baseline):
              | compatibility.generation_paths(upstream, None) | REUSED_TABLE_GENERATORS)
     changed = set(compatibility.git(upstream, 'diff', '--name-only', baseline, 'HEAD').splitlines())
     for name in sorted((names & changed) - REGENERATED):
+        if name == 'dm/PRODUCT':
+            old_product = compatibility.git(upstream, 'show', baseline + ':' + name).strip()
+            new_product = (upstream / name).read_text().strip()
+            old_match = re.fullmatch(r'(\d+\.\d+\.\d+)-r\d+', old_product)
+            new_match = re.fullmatch(r'(\d+\.\d+\.\d+)-r\d+', new_product)
+            if old_match and new_match and old_match[1] == new_match[1]:
+                continue  # Original NSO hashes are checked separately; programs are regenerated.
+            raise ValueError('Full preparation required; asset dependency changed: ' + name)
         allowed = compatibility.COMPATIBLE_GENERATORS.get(name, set())
         before = hashlib.sha256(compatibility.git(upstream, 'show', baseline + ':' + name).encode()).hexdigest()
         current = upstream / name
@@ -87,6 +96,7 @@ def refresh():
                     str(frameworks), 'main', 'sdk'], check=True)
     (frameworks / 'Guest.framework/Guest').chmod(0o755)
     source = ci.CONFIG['upstream_commit']
+    product = (upstream / 'dm/PRODUCT').read_text().strip()
     evidence = {'source_commit': source, 'nso_sha256': ci.CONFIG['nso_sha256'],
                 'generator_sha256': {n: ci.sha256(upstream / n) for n in sorted(REGENERATED)},
                 'product_files': {p.name: ci.sha256(p) for p in sorted(output.iterdir()) if p.is_file()}}
@@ -105,13 +115,18 @@ def refresh():
                 replacements[base + 'dm/' + name] = output / name
             with zipfile.ZipFile(payload) as old, zipfile.ZipFile(revised, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as new:
                 for member in old.infolist():
-                    if member.filename not in replacements:
+                    if member.filename == base + 'dm/shell_info.txt':
+                        text = old.read(member).decode()
+                        text = re.sub(r'^PRODUCT=.*$', 'PRODUCT=' + product, text, flags=re.M)
+                        new.writestr(member, text)
+                    elif member.filename not in replacements:
                         new.writestr(member, old.read(member))
                 for name, path in replacements.items():
                     new.write(path, name)
             revised.replace(payload)
             info['producer'] = {'source_commit': source, 'tools_commit': os.environ['TOOLS_COMMIT']}
             info['prepare_key'] = 'ios-program-refresh-v2-' + identity
+            info['payload']['product'] = product
             info['payload']['payload_sha256'] = ci.sha256(payload)
             info['files'] = {name: {'bytes': (destination / name).stat().st_size,
                                     'sha256': ci.sha256(destination / name)} for name in info['files']}
@@ -123,6 +138,7 @@ def refresh():
             shutil.rmtree(destination / 'product')
             shutil.copytree(output, destination / 'product')
             info['source_commit'] = source
+            info['product'] = product
             info['key'] = 'macos-program-refresh-v2-' + identity
             info['files'] = {p.relative_to(destination).as_posix(): ci.sha256(p)
                              for p in sorted(destination.rglob('*')) if p.is_file() and p.name != 'manifest.json'}
